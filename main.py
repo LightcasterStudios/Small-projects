@@ -1,178 +1,142 @@
-import winsound
-from tkinter import *
-import random
+import turtle
 import winsound
 
-GAME_WIDTH = 700
-GAME_HEIGHT = 700
-SPEED = 200
-SPACE_SIZE = 50
-BODY_PARTS = 2
-SNAKE_COLOR = "#FFFFFF"
-FOOD_COLOR = "#FF0000"
-BACKGROUND_COLOR = "#000000"
+wn = turtle.Screen()
+wn.title("Pong By Lightcaster Studios")
+wn.bgcolor("black")
+wn.setup(width=800, height=600)
+wn.tracer(0)
+
+#score
+score_a = 0
+score_b = 0
+
+# Paddle A
+paddle_a = turtle.Turtle()
+paddle_a.speed(0)
+paddle_a.shape("square")
+paddle_a.color("red")
+paddle_a.shapesize(stretch_wid=5, stretch_len=1)
+paddle_a.penup()
+paddle_a.goto(-350, 0)
+
+# Paddle B
+paddle_b = turtle.Turtle()
+paddle_b.speed(0)
+paddle_b.shape("square")
+paddle_b.color("blue")
+paddle_b.shapesize(stretch_wid=5, stretch_len=1)
+paddle_b.penup()
+paddle_b.goto(+350, 0)
+
+# Ball
+ball = turtle.Turtle()
+ball.speed(0)
+ball.shape("circle")
+ball.color("white")
+ball.shapesize(stretch_wid=1, stretch_len=1)
+ball.penup()
+ball.goto(0, 0)
+ball.dx = 0.2
+ball.dy = 0.2
+
+# Pen
+pen = turtle.Turtle()
+pen.speed(0)
+pen.color("white")
+pen.penup()
+pen.hideturtle()
+pen.goto(0, 260)
+pen.write("Player A: 0 Player B: 0", align="center", font=("courier", 24, "normal"))
 
 
-class Snake:
+# Function
+def paddle_a_up():
+    y = paddle_a.ycor()
+    y += 20
+    paddle_a.sety(y)
 
-    def __init__(self):
-        self.body_size = BODY_PARTS
-        self.coordinates = []
-        self.squares = []
+def paddle_a_down():
+    y = paddle_a.ycor()
+    y -= 20
+    paddle_a.sety(y)
 
-        for i in range(0, BODY_PARTS):
-            self.coordinates.append([0, 0])
+def paddle_b_up():
+    y = paddle_b.ycor()
+    y += 20
+    paddle_b.sety(y)
 
-        for x, y in self.coordinates:
-            square = canvas.create_rectangle(x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill=SNAKE_COLOR, tag="snake")
-            self.squares.append(square)
+def paddle_b_down():
+    y = paddle_b.ycor()
+    y -= 20
+    paddle_b.sety(y)
 
-            
+# keyboard binding
+wn.listen()
+wn.onkeypress(paddle_a_up, "w")
+wn.onkeypress(paddle_a_down, "s")
 
+wn.onkeypress(paddle_b_up, "Up")
+wn.onkeypress(paddle_b_down, "Down")
 
-class Food:
+# Main game loop
+while True:
+    wn.update()
 
-    def __init__(self):
-        x = random.randint(0, (GAME_WIDTH / SPACE_SIZE) - 1) * SPACE_SIZE
-        y = random.randint(0, (GAME_HEIGHT / SPACE_SIZE) - 1) * SPACE_SIZE
+    # Move the ball
+    ball.setx(ball.xcor() + ball.dx)
+    ball.sety(ball.ycor() + ball.dy)
 
-        self.coordinates = [x, y]
+    # Border checking
+    if ball.ycor() > 290:
+        ball.sety(290)
+        ball.dy *= -1
+        winsound.PlaySound("pluck.wav", winsound.SND_ASYNC)
 
-        canvas.create_oval(x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill=FOOD_COLOR, tag="food")
+    if ball.ycor() < -290:
+        ball.sety(-290)
+        ball.dy *= -1
+        winsound.PlaySound("pluck.wav", winsound.SND_ASYNC)
 
-
-def next_turn(snake, food):
-    x, y = snake.coordinates[0]
-
-    if direction == "up":
-        y -= SPACE_SIZE
-    elif direction == "down":
-        y += SPACE_SIZE
-    elif direction == "left":
-        x -= SPACE_SIZE
-    elif direction == "right":
-        x += SPACE_SIZE
-
-    snake.coordinates.insert(0, (x, y))
-
-    square = canvas.create_rectangle(x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill=SNAKE_COLOR)
-
-    snake.squares.insert(0, square)
-
-    if x == food.coordinates[0] and y == food.coordinates[1]:
-
-        global score
-
-        score += 1
-
+    if ball.xcor() > 390:
+        ball.goto(0, 0)
+        ball.dx *= -1
+        score_a += 1
         winsound.PlaySound("boop.wav", winsound.SND_ASYNC)
+        pen.clear()
+        pen.write("Player A: {} Player B: {}". format(score_a, score_b), align="center", font=("courier", 24, "normal"))
 
-        SPEED - 5
+    if ball.xcor() < -390:
+        ball.goto(0, 0)
+        ball.dx *= -1
+        score_b += 1
+        winsound.PlaySound("boop.wav", winsound.SND_ASYNC)
+        pen.clear()
+        pen.write("Player A: {} Player B: {}".format(score_a, score_b), align="center", font=("courier", 24, "normal"))
 
-        label.config(text="score:{}".format(score))
+    if paddle_a.ycor() <= -270:
+        paddle_a.sety(-260)
 
-        canvas.delete("food")
+    if paddle_a.ycor() >= 270:
+        paddle_a.sety(260)
 
-        food = Food()
+    if paddle_b.ycor() <= -270:
+        paddle_b.sety(-260)
 
-    else:
-        del snake.coordinates[-1]
-        winsound.PlaySound("blip.wav", winsound.SND_ASYNC)
-
-        canvas.delete(snake.squares[-1])
-
-        del snake.squares[-1]
-
-    if check_collisions(snake):
-        game_over()
-
-    else:
-        window.after(SPEED, next_turn, snake, food)
-
-
-def change_direction(new_direction):
-
-   global direction
-   if new_direction == 'left':
-       if direction != 'right':
-           direction = new_direction
-   elif new_direction == 'right':
-       if direction != 'left':
-           direction = new_direction
-   elif new_direction == 'up':
-       if direction != 'down':
-           direction = new_direction
-   elif new_direction == 'down':
-       if direction != 'up':
-           direction = new_direction
-
-
-
-def check_collisions(snake):
-
-  x, y = snake.coordinates[0]
-
-  if x < 0 or x >= GAME_WIDTH:
-      winsound.PlaySound("pacdead.wav", winsound.SND_ASYNC)
-      print("GAME OVER")
-      return True
-
-
-  if y < 0 or y >= GAME_HEIGHT:
-      winsound.PlaySound("pacdead.wav", winsound.SND_ASYNC)
-      print("GAME OVER")
-      return True
-
-  for BODY_PARTS in snake.coordinates[1:]:
-      if x == BODY_PARTS[0] and y == BODY_PARTS[1]:
-         winsound.PlaySound("pacdead.wav", winsound.SND_ASYNC)
-         print("GAME OVER")
-         return True
-
-
-
-def game_over():
-
-    canvas.delete(ALL)
-    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()/2,
-                       font=('consolas',70), text="GAME OVER", fill="red", tag="gameover")
+    if paddle_b.ycor() >= 270:
+        paddle_b.sety(260)
 
 
 
 
-window = Tk()
-window.title("snake game")
-window.resizable(False, False)
+    # Paddle and ball collisions
+    if (ball.xcor() > 350 and ball.xcor() < 360) and (ball.ycor() < paddle_b.ycor() + 40 and ball.ycor() > paddle_b.ycor() -50):
+        ball.setx(340)
+        ball.dx *= -1.0
+        winsound.PlaySound("pluck.wav", winsound.SND_ASYNC)
 
-score = 0
+    if (ball.xcor() < -350 and ball.xcor() > -360) and (ball.ycor() < paddle_a.ycor() + 40 and ball.ycor() > paddle_a.ycor() -50):
+        ball.setx(-340)
+        ball.dx *= -1.0
+        winsound.PlaySound("pluck.wav", winsound.SND_ASYNC)
 
-direction = 'down'
-
-label = Label(window, text="score:{}".format(score), font=("consolas", 40))
-label.pack()
-
-canvas = Canvas(window, bg=BACKGROUND_COLOR, height=GAME_HEIGHT, width=GAME_WIDTH)
-canvas.pack()
-
-window.update()
-
-window_width = window.winfo_width()
-window_height = window.winfo_height()
-screen_width = window.winfo_screenwidth()
-screen_height = window.winfo_screenheight()
-
-x = int((screen_width/2) - (window_width/2))
-y = int((screen_height/2) - (window_height/2))
-
-window.geometry(f"{window_width}x{window_height}+{x}+{y}")
-
-window.bind('<Left>', lambda event: change_direction('left'))
-window.bind('<Right>', lambda event: change_direction('right'))
-window.bind('<Up>', lambda event: change_direction('up'))
-window.bind('<Down>', lambda event: change_direction('down'))
-snake = Snake()
-food = Food()
-
-next_turn(snake, food)
-
-window.mainloop()
